@@ -21,7 +21,7 @@ import datetime
 def get_meta(key=None):
     meta = {
         'name': 'retroplay',
-        'version': '0.1',
+        'version': '0.2',
         'date': 'March, 2021',
         'author': 'Tuncay D',
         'license': 'MIT License',
@@ -50,8 +50,8 @@ def get_arguments():
         metavar='ROM_FILE',
         nargs='*',
         help=('game ROM to play, if multiple files are given then the first is'
-             ' selected at default, wildcards, globbing and relative paths are'
-             ' supported, see option "--game" for more info')
+             ' selected at default, wildcards are not supported, see option'
+             ' "--game" for more info')
     )
 
     parser.add_argument(
@@ -90,10 +90,7 @@ def get_arguments():
         '--game', '-g',
         metavar='ROM_FILE',
         nargs='+',
-        help=('path to the game ROM to play, wildcards, globbing and relative'
-             ' paths are supported, but only first match is used, if more than'
-             ' one file was added then its queued into a temporary list of ROM'
-             ' files')
+        help=('path to the game ROM to play, wildcards are not supported')
     )
     parser.add_argument(
         '--libretro', '-L',
@@ -103,8 +100,8 @@ def get_arguments():
              ' be an absolute path, otherwise if contains any "/" somewhere'
              ' else then consider it to be a relative path, if no "/" is found'
              ' then search the filename in the RetroArch core directory,'
-             ' wildcards and globbing is supported and resolves to a single'
-             ' file, the extension and ending part "_libretro.so" is optional')
+             ' wildcards are not supported, the extension and ending part'
+             ' "_libretro.so" is optional')
     )
 
     parser.add_argument(
@@ -121,7 +118,7 @@ def get_arguments():
         help=('path to a patch file to apply to the ROM on the fly, supported'
              ' formats are ".ups", ".bps" and ".ips" files, it will create a'
              ' temporary symbolic link file during the play session, wildcards'
-             ' and globbing is supported and resolves to a single file')
+             ' are not supported')
     )
 
     parser.add_argument(
@@ -149,12 +146,12 @@ def get_arguments():
              ' does not contain any slash then the filename is searched in the'
              ' playlist folder of RetroArch, if "FILE" starts with a slash "/"'
              ' then it is handled as an absolute path, otherwise any "/" is'
-             ' interpreted as a relative path, wildcards and globbing is'
-             ' supported and resolves to one file, file extension ".lpl" is'
-             ' added automatically if missing, there are two special keywords:'
-             ' "history" and "favorites", which resolve to RetroArchs'
-             ' configured "content_history_path" and "content_favorites_path",'
-             ' default value is "history" if argument "FILE" is missing')
+             ' interpreted as a relative path, wildcards are not supported,'
+             ' file extension ".lpl" is added automatically if missing, there'
+             ' are two special keywords: "history" and "favorites", which'
+             ' resolve to RetroArchs configured "content_history_path" and'
+             ' "content_favorites_path", default value is "history" if'
+             ' argument "FILE" is missing')
     )
 
     parser.add_argument(
@@ -162,8 +159,8 @@ def get_arguments():
         metavar='PATH',
         nargs='+',
         help=('path to a directory to add all files from it and populate the'
-            ' temporary internal list of ROM files, wildcards and globbing'
-            ' resolve to first match, but multiple paths can be given')
+            ' temporary internal list of ROM files, wildcards are not'
+            ' supported, but multiple paths separated by space can be given')
     )
 
     parser.add_argument(
@@ -484,7 +481,9 @@ def get_path(path, useglob=False):
         fullpath = os.path.expandvars(path)
         fullpath = pathlib.Path(fullpath).expanduser()
         if useglob:
-            fullpath = glob.glob(fullpath.as_posix())
+            path = fullpath.as_posix()
+            path = re.sub(r'\[(.+?)\]', r'[[]\1[]]', path)
+            fullpath = glob.glob(path)
             if fullpath:
                 fullpath = pathlib.Path(fullpath[0])
             else:
@@ -534,13 +533,12 @@ def get_playlist_file(playlist, ra_config):
             if '/' in playlist:
                 playlist_file = pathlib.PurePath(playlist)
                 playlist_file = playlist_file.with_suffix('.lpl')
-                playlist_file = get_path(playlist, True)
+                playlist_file = get_path(playlist)
             else:
                 pl_dir= pathlib.PurePath(ra_config['playlist_directory'])
                 playlist_file = pathlib.PurePath(playlist)
                 playlist_file = get_path(
-                        pl_dir / playlist_file.with_suffix('.lpl'),
-                        True
+                        pl_dir / playlist_file.with_suffix('.lpl')
                 )
         return playlist_file
     else:
@@ -570,7 +568,7 @@ def get_playlist_item(playlist_data, tagname):
 def get_dir_files(dir_path):
     files = []
     for path in dir_path:
-        path = get_path(path, True)
+        path = get_path(path)
         if path and path.is_dir():
             files.extend(path.glob('*.*'))
     if files:
@@ -616,7 +614,7 @@ def get_core_path(settings, core_name, libretro_dir):
             core_path += '_libretro.so'
         if not core_path.endswith('.so'):
             core_path += '.so'
-        return get_path(libretro_dir / core_path, True)
+        return get_path(libretro_dir / core_path)
 
 
 def get_core_path_byfilename(core_path, libretro_dir):
@@ -624,7 +622,7 @@ def get_core_path_byfilename(core_path, libretro_dir):
         core_path += '_libretro.so'
     if not core_path.endswith('.so'):
         core_path += '.so'
-    return get_path(libretro_dir / core_path, True)
+    return get_path(libretro_dir / core_path)
 
 
 def get_record_file(path, rom_path):
@@ -648,7 +646,7 @@ def get_record_file(path, rom_path):
 
 
 def get_patch_file(path):
-    patch_file = get_path(path, True)
+    patch_file = get_path(path)
     if patch_file:
         try:
             patch_format = patch_file.suffix[1:].lower()
@@ -852,7 +850,7 @@ if __name__ == '__main__':
     check_requirements(meta)
     arguments = get_arguments()
 
-    settings_file = get_path(arguments.settings, True)
+    settings_file = get_path(arguments.settings)
     settings = get_settings(settings_file)
 
     if len(sys.argv) == 1:
@@ -1007,10 +1005,10 @@ if __name__ == '__main__':
             rom_path = get_rom_byindex(roms_list, arguments.index)
 
         if rom_path:
-            rom_path = get_path(rom_path, True)
+            rom_path = get_path(rom_path)
             if arguments.libretro:
                 if '/' in arguments.libretro:
-                    core_path = get_path(arguments.libretro, True)
+                    core_path = get_path(arguments.libretro)
                 else:
                     core_path = get_core_path_byfilename(
                             arguments.libretro,

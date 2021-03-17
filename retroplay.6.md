@@ -71,13 +71,11 @@ active *settings.ini* file specified in *--config*, then exit.
 no *FILE* is specified.
 
 **-g**, **--game** *ROM_FILE*...
-: Path to the game ROM to play.  Wildcards, relative paths and globbing are
-supported, but only the first matching entry is used.  Multiple files are
-queued into a temporary internal list of ROM files.  While only the first file
-is used to run in the emulator, this list can be sorted and filtered before
-emulation starts. Note: Wildcards (such as "\*" or "?") can be resolved by your
-terminal without putting it in quotation marks, which will lead to add multiple
-files into the internal list of ROM files.
+: Path to the game ROM to play.  Wildcards are not supported supported.  But
+multiple files can be given ove if the wildcards are resolved in the shell, so
+the program retrieves multiple files instead.  Multiple files are queued into a
+temporary internal list of ROM files.  While only the first file is used to run
+in the emulator, this list can be sorted and filtered before
 Example: *--game "~/roms/snes/Super Mario World (U)\*"*
 
 **-L**, **--libretro** *FILE*
@@ -87,16 +85,14 @@ it contains any "/", but does not start with it, then consider it to be a
 relative path and expand it from current working directory.  If no "/" is
 present, then search this filename in the RetroArch core directory to see if
 one is matching.  Generally the filename ending part *\_libretro.so* can be
-left out; they will be added automatically if needed.  Wildcards and globbing
-is supported, which resolves to a single file.  This option has higher priority
-than **--core**.
+left out; they will be added automatically if needed.  Wildcards are not
+supported.  This option has higher priority than **--core**.
 Example: *--libretro mesen_libretro.so*
 
 **-C**, **--core** *ID*
 : Force a specific core by its custom core id specified in the programs
 *settings.ini* file.  This option will lookup the filename by given *ID* under
-the section **[core]**.  Wildcards and globbing is supported, which resolves to
-a single file.
+the section **[core]**.  Wildcards are not supported.
 Example: *--core snes*
 
 **-p**, **--patch** *FILE*
@@ -105,8 +101,7 @@ are *.ups*, *.bps* and *.ips* files.  The original ROM file is untouched, it
 will just create a temporary symbolic link during the play session.  This will
 help to avoid collision for save files of untouched ROMs.  The basename of the
 temporary file will have the format *PATCHFILE.EXT\_ROMFILE* and is used for
-save files as well.  Wildcards and globbing is supported, which resolves to a
-single file.
+save files as well.  Wildcards are not supported.
 Example: *--patch "./KKQFixedIntros.bps"*
 
 **-P**, **--nopatch**
@@ -127,21 +122,18 @@ of ROM files.  If *FILE* does not contain any slash "/", then the playlist file
 will be looked up in the playlist folder of your RetroArch configuration.  If
 *FILE* starts with a "/", then it is handled as an absolute path.  If any "/"
 is found somewhere in *FILE*, then it is considered to be a relative path and
-will be extended to fullpath from current working directory.  Wildcards and
-globbing is supported and the first match is used.  File extension *.lpl* is
-optional and is added if missing.  The special keywords **history** and
-**favorites** on their own will be automatically resolved to what is specified
-in RetroArchs own configuration at **content_history_path** or
-**content_favorites_path** variables.  Defaults to **history** if no *FILE* was
-specified.
+will be extended to fullpath from current working directory.  Wildcards are not
+supported.  File extension *.lpl* is optional and is added if missing.  The
+special keywords **history** and **favorites** on their own will be
+automatically resolved to what is specified in RetroArchs own configuration at
+**content_history_path** or **content_favorites_path** variables.  Defaults to
+**history** if no *FILE* was specified.
 Example: *--playlist "\*Game Boy"*
 
 **-d**, **--dir** *PATH*...
 : Path to a directory to read all files from and populate the programs internal
-temporary list of ROM files.  Multiple *PATH* can be specified.  Wildcards and
-globbing is supported, but only the first entry is used.  However using
-wildcards without quotation marks will be handled by the terminal and adds
-multiple directories matching the pattern.
+temporary list of ROM files.  Multiple *PATH* can be specified.  Wildcards are
+not supported.
 Example: *--dir . "~/Emulators/\*/snes\*"*
 
 **-o**, **--ls**
